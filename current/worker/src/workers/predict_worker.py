@@ -10,6 +10,10 @@ import asyncio
 from aio_pika import connect_robust, IncomingMessage, Message
 import logging
 from ultralytics import YOLO
+import base64
+from io import BytesIO
+from PIL import Image
+import numpy as np
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq/")
 IMAGE_QUEUE = os.getenv("IMAGE_QUEUE", "image_tasks")
@@ -39,12 +43,19 @@ async def handle_image_message(message: IncomingMessage) -> None:
     async with message.process():
         payload = json.loads(message.body)
         transaction_id = payload.get("transaction_id")
-        image_path = payload.get("image")
+        image_b64 = payload.get("image")
+        # Decode base64-encoded image string to a PIL Image
+        image_bytes = base64.b64decode(image_b64)
+        image = Image.open(BytesIO(image_bytes)).convert("RGB")
 
         try:
-            results = yolo_model(image_path)
+            # Perform YOLO prediction on the decoded image (numpy array)
+            results = yolo_model(np.array(image))
             boxes = results[0].boxes.xyxy.tolist()
-            await message.channel.default_exchange.publish(
+            # Publish results using a fresh connection and channel
+            publish_connection = await connect_robust(RABBITMQ_URL)
+            publish_channel = await publish_connection.channel()
+            await publish_channel.default_exchange.publish(
                 Message(
                     body=json.dumps({
                         "transaction_id": transaction_id,
@@ -53,6 +64,7 @@ async def handle_image_message(message: IncomingMessage) -> None:
                 ),
                 routing_key=YOLO_RESULTS_QUEUE
             )
+            await publish_connection.close()
         except Exception as e:
             logger.error(f"Error processing image task %s: %s", transaction_id, e)
             raise

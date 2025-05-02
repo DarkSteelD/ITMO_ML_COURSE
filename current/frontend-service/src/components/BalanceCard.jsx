@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
+import AuthContext from '../contexts/AuthContext';
 
 /**
  * Displays the current balance and provides a top-up form.
@@ -10,9 +11,11 @@ const BalanceCard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const { token } = useContext(AuthContext);
+
   const fetchBalance = async () => {
     try {
-      const response = await api.get('/balance');
+      const response = await api.get('/balance/');
       setBalance(response.data.balance);
     } catch (err) {
       console.error(err);
@@ -20,8 +23,10 @@ const BalanceCard = () => {
   };
 
   useEffect(() => {
-    fetchBalance();
-  }, []);
+    if (token) {
+      fetchBalance();
+    }
+  }, [token]);
 
   const handleTopUp = async () => {
     setLoading(true);

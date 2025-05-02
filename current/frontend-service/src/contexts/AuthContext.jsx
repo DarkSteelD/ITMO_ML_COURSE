@@ -15,7 +15,13 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = async (email, password) => {
-    const response = await api.post('/auth/login', { username: email, password });
+    // OAuth2PasswordRequestForm expects application/x-www-form-urlencoded data
+    const payload = new URLSearchParams();
+    payload.append('username', email);
+    payload.append('password', password);
+    const response = await api.post('/auth/login', payload, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
     setToken(response.data.access_token);
     localStorage.setItem('token', response.data.access_token);
   };

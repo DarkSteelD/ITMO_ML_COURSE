@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from src.schemas.balance import BalanceRead, BalanceTopUp
 from src.dependencies import get_db, get_current_active_user
-from src.db.models import Transaction, User
+from src.db.models import Transaction, User, TransactionType
 
 
 router = APIRouter(prefix="/balance", tags=["balance"])
@@ -68,12 +68,12 @@ async def top_up_balance(
       HTTPException: 400 if amount invalid.
       HTTPException: 401 if user is not authenticated.
     """
-    # Create the deposit transaction
+    # Create deposit transaction without storing comment in DB
     transaction = Transaction(
         user_id=current_user.id,
-        type="deposit",
-        amount=request.amount,
-        comment=request.comment
+        # Use the enum's lowercase value to match DB storage
+        type=TransactionType.DEPOSIT.value,
+        amount=request.amount
     )
     db.add(transaction)
     # Update user's balance

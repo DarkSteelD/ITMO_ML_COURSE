@@ -13,13 +13,14 @@ from aio_pika import connect_robust, Message
 
 from src.schemas.prediction import PredictionRequest, PredictionResponse, DataValidationError
 from src.dependencies import get_db, get_current_active_user
-from src.db.models import User as DBUser, Transaction
+from src.db.models import User as DBUser, Transaction, TransactionType
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq/")
 IMAGE_QUEUE = os.getenv("IMAGE_QUEUE", "image_tasks")
 
+@router.post("", response_model=PredictionResponse)
 @router.post("/", response_model=PredictionResponse)
 async def predict(
     request: PredictionRequest,
@@ -54,16 +55,16 @@ async def predict(
       HTTPException: 403 if user is inactive.
       HTTPException: 400 if user has insufficient balance.
     """
-    # Ensure positive balance
-    if current_user.balance <= 0:
-        raise HTTPException(status_code=400, detail="Insufficient balance")
-    # Charge fixed credits for prediction
+    # Charge fixed credits for prediction and ensure sufficient balance
     credits_spent = 50.0
+    if current_user.balance < credits_spent:
+        raise HTTPException(status_code=400, detail="Insufficient balance")
     # Create a 'prediction' transaction record
     transaction = Transaction(
         user_id=current_user.id,
-        type="prediction",
-        amount=credits_spent
+        type=TransactionType.PREDICTION.value,
+        amount=credits_spent,
+        input_image=request.image
     )
     db.add(transaction)
     # Deduct balance
@@ -87,5 +88,6 @@ async def predict(
     return PredictionResponse(
         text_prediction=None,
         image_prediction=None,
-        credits_spent=credits_spent
+        credits_spent=credits_spent,
+        transaction_id=transaction.id
     )

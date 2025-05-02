@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from '../contexts/AuthContext';
 
 /**
  * Registration page for new users.
@@ -9,7 +10,15 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const { register, token } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (token) {
+      navigate('/dashboard');
+    }
+  }, [token, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,33 +32,37 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="col-md-6 offset-md-3">
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label>Email</label>
-          <input
-            type="email"
-            className="form-control"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+    <div className="container my-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6">
+          <h2>Register</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label>Email</label>
+              <input
+                type="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label>Password</label>
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                required
+              />
+            </div>
+            {error && <div className="text-danger mb-3">{error}</div>}
+            <button type="submit" className="btn btn-primary">Register</button>
+          </form>
         </div>
-        <div className="mb-3">
-          <label>Password</label>
-          <input
-            type="password"
-            className="form-control"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={8}
-            required
-          />
-        </div>
-        {error && <div className="text-danger mb-3">{error}</div>}
-        <button type="submit" className="btn btn-primary">Register</button>
-      </form>
+      </div>
     </div>
   );
 };

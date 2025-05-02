@@ -5,7 +5,7 @@ Provides database connectivity using SQLAlchemy.
 """
 
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
@@ -34,3 +34,12 @@ def init_db() -> None:
     """
     from src.db.models import Base
     Base.metadata.create_all(bind=engine)
+    # Automatically add missing 'result' column to 'transactions' table
+    inspector = inspect(engine)
+    columns = [column['name'] for column in inspector.get_columns('transactions')]
+    if 'result' not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN result JSON"))
+    # Reset any negative user balances to zero
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE users SET balance = 0 WHERE balance < 0"))

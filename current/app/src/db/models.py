@@ -5,7 +5,7 @@ Contains ORM models for the application.
 """
 
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
 from datetime import datetime, timezone
@@ -16,8 +16,8 @@ class TransactionType(PyEnum):
     """
     Enum for transaction types.
     """
-    DEPOSIT = "deposit"
-    PREDICTION = "prediction"
+    DEPOSIT = "DEPOSIT"
+    PREDICTION = "PREDICTION"
 
 class User(Base):
     """
@@ -43,6 +43,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+    # Relationship to user transactions
+    transactions = relationship("Transaction", back_populates="user")
 
 class Transaction(Base):
     """
@@ -53,16 +55,21 @@ class Transaction(Base):
       user_id (int): foreign key to users.id
       type (Enum): 'deposit' or 'prediction'
       amount (float): amount of transaction
+      comment (str): optional comment for deposit transactions
       timestamp (datetime): datetime of transaction
+      input_image (JSON): Base64-encoded input image stored as JSON string
+      result (JSON): YOLO boxes result stored as JSON list
       user: relationship back to User model
     """
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    type = Column(Enum(TransactionType))
+    type = Column(Enum(TransactionType, native_enum=False), nullable=False)
     amount = Column(Float)
     timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    input_image = Column(JSON, nullable=True)  # Base64-encoded input image stored as JSON string
+    result = Column(JSON, nullable=True)  # YOLO boxes result stored as JSON list
 
     user = relationship("User", back_populates="transactions")
     

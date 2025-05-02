@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
+import PredictionPage from './pages/PredictionPage';
 import PrivateRoute from './components/PrivateRoute';
 
 /**
@@ -33,6 +34,14 @@ function App() {
             element={
               <PrivateRoute>
                 <TransactionsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/prediction/:id"
+            element={
+              <PrivateRoute>
+                <PredictionPage />
               </PrivateRoute>
             }
           />

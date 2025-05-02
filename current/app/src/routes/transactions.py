@@ -5,7 +5,7 @@ Contains endpoints for transaction history.
 """
 
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.schemas.transaction import TransactionRead
@@ -47,3 +47,24 @@ async def get_transactions(
         .all()
     )
     return transactions
+
+@router.get("/{transaction_id}", response_model=TransactionRead)
+async def get_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_active_user)
+):
+    """
+    Get a single transaction by ID for the current authenticated user.
+    """
+    transaction = (
+        db.query(Transaction)
+        .filter(
+            Transaction.id == transaction_id,
+            Transaction.user_id == current_user.id
+        )
+        .first()
+    )
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return transaction

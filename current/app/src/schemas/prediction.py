@@ -27,11 +27,13 @@ class PredictionResponse(BaseModel):
     Attributes:
       image_prediction (Optional[str]): image output from the prediction model (base64 or URL).
       credits_spent (float): amount of credits charged for this prediction.
+      transaction_id: ID of the created transaction record
     """
     image_prediction: Optional[str] = Field(
         None, description="Image output from the prediction model (base64 or URL)"
     )
     credits_spent : float = Field(..., description="Amount of credits charged")
+    transaction_id: int = Field(..., description="ID of the created transaction record")
 
 
 class DataValidationError(BaseModel):
