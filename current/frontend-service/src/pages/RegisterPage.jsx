@@ -9,8 +9,9 @@ import AuthContext from '../contexts/AuthContext';
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState(null);
-  const { register, token } = useContext(AuthContext);
+  const { token } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Redirect to dashboard if already authenticated
@@ -24,7 +25,7 @@ const RegisterPage = () => {
     e.preventDefault();
     setError(null);
     try {
-      await api.post('/auth/register', { email, password });
+      await api.post('/auth/register', { email, password, is_admin: isAdmin });
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.detail || err.message);
@@ -57,6 +58,18 @@ const RegisterPage = () => {
                 minLength={8}
                 required
               />
+            </div>
+            <div className="form-check mb-3">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="isAdmin"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+              />
+              <label className="form-check-label" htmlFor="isAdmin">
+                Register as admin
+              </label>
             </div>
             {error && <div className="text-danger mb-3">{error}</div>}
             <button type="submit" className="btn btn-primary">Register</button>

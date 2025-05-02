@@ -10,6 +10,7 @@ from src.routes.auth import router as auth_router
 from src.routes.balance import router as balance_router
 from src.routes.transactions import router as transactions_router
 from src.routes.prediction import router as prediction_router
+from src.routes.admin import router as admin_router
 from src.workers.result_consumer import start_result_consumer
 
 test_api = FastAPI(
@@ -25,6 +26,7 @@ test_api.include_router(auth_router)
 test_api.include_router(balance_router)
 test_api.include_router(transactions_router)
 test_api.include_router(prediction_router)
+test_api.include_router(admin_router)
 
 @test_api.on_event("startup")
 async def start_result_consumer_event():

@@ -23,8 +23,10 @@ class UserCreate(UserBase):
 
     Attributes:
       password: raw password field, must meet complexity requirements
+      is_admin: flag indicating administrative privileges
     """
     password: str = Field(..., min_length=8, description="User password of at least 8 characters")
+    is_admin: bool = Field(False, description="Flag indicating administrative privileges")
 
 
 class UserRead(UserBase):

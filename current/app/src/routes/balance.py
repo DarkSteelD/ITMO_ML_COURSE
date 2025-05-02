@@ -8,8 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.schemas.balance import BalanceRead, BalanceTopUp
-from src.dependencies import get_db, get_current_active_user
+from src.dependencies import get_db, get_current_active_user, get_current_active_admin
 from src.db.models import Transaction, User, TransactionType
+from src.schemas.admin import AdminTopUpAllRequest, AdminTopUpAllResponse
 
 
 router = APIRouter(prefix="/balance", tags=["balance"])
@@ -82,3 +83,32 @@ async def top_up_balance(
     db.commit()
     db.refresh(current_user)
     return BalanceRead(user_id=current_user.id, balance=current_user.balance)
+
+@router.post(
+    "/topup_all",
+    response_model=AdminTopUpAllResponse,
+    dependencies=[Depends(get_current_active_admin)],
+    status_code=status.HTTP_200_OK,
+)
+async def top_up_all_balances(
+    request: AdminTopUpAllRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Admin-only: top up all users' balances by the specified amount.
+    """
+    users = db.query(User).all()
+    topups = []
+    for user in users:
+        user.balance += request.amount
+        db.add(user)
+        transaction = Transaction(
+            user_id=user.id,
+            type=TransactionType.DEPOSIT.value,
+            amount=request.amount,
+        )
+        db.add(transaction)
+        topups.append(BalanceRead(user_id=user.id, balance=user.balance))
+    db.commit()
+    message = f"Topped up {request.amount} credits for {len(users)} users"
+    return AdminTopUpAllResponse(message=message, topups=topups)

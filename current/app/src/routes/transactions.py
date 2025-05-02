@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.schemas.transaction import TransactionRead
-from src.dependencies import get_db, get_current_active_user
+from src.dependencies import get_db, get_current_active_user, get_current_active_admin
 from src.db.models import Transaction, User as DBUser
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
@@ -43,6 +43,20 @@ async def get_transactions(
     transactions = (
         db.query(Transaction)
         .filter(Transaction.user_id == current_user.id)
+        .order_by(Transaction.timestamp.desc())
+        .all()
+    )
+    return transactions
+
+@router.get("/all", response_model=List[TransactionRead], dependencies=[Depends(get_current_active_admin)])
+async def get_all_transactions(
+    db: Session = Depends(get_db)
+):
+    """
+    Get all transactions (admin only).
+    """
+    transactions = (
+        db.query(Transaction)
         .order_by(Transaction.timestamp.desc())
         .all()
     )

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from src.core.security import verify_password, get_password_hash, create_access_token
 from src.schemas.auth import Token
 from src.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from src.dependencies import get_db
+from src.dependencies import get_db, get_current_active_user
 from src.db.models import User
 from src.schemas.user import UserCreate, UserRead
 
@@ -49,7 +49,7 @@ async def register_user(
         email=user_in.email,
         hashed_password=hashed_password,
         balance=0.0,
-        is_admin=False,
+        is_admin=user_in.is_admin,
         created_at=datetime.now(timezone.utc)
     )
     db.add(user)
@@ -84,4 +84,14 @@ async def login_user(
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
-    return Token(access_token=access_token, token_type="bearer") 
+    return Token(access_token=access_token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserRead)
+async def get_current_user_info(
+    current_user: User = Depends(get_current_active_user)
+) -> UserRead:
+    """
+    Get the currently authenticated user's info.
+    """
+    return current_user 

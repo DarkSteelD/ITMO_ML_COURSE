@@ -8,6 +8,8 @@ import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
 import PredictionPage from './pages/PredictionPage';
 import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
+import AdminPage from './pages/AdminPage';
 
 /**
  * Main application component with navigation and routing.
@@ -35,6 +37,14 @@ function App() {
               <PrivateRoute>
                 <TransactionsPage />
               </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
             }
           />
           <Route

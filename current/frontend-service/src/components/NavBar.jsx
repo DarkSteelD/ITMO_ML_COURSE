@@ -7,7 +7,7 @@ import AuthContext from '../contexts/AuthContext';
  * Application navigation bar.
  */
 const NavBar = () => {
-  const { token, logout } = useContext(AuthContext);
+  const { token, user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -26,6 +26,9 @@ const NavBar = () => {
               <>
                 <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
                 <Nav.Link as={Link} to="/transactions">Transactions</Nav.Link>
+                {user?.is_admin && (
+                  <Nav.Link as={Link} to="/admin">Admin</Nav.Link>
+                )}
               </>
             )}
           </Nav>

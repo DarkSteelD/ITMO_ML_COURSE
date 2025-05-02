@@ -10,7 +10,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Optionally fetch user details here
+      // Fetch current user details
+      api.get('/auth/me')
+        .then((resp) => setUser(resp.data))
+        .catch((err) => {
+          console.error('Failed to fetch user info', err);
+          setUser(null);
+        });
+    } else {
+      // Clear auth header and user info
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
     }
   }, [token]);
 
@@ -32,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
+    <AuthContext.Provider value={{ token, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
